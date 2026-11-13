@@ -158,3 +158,35 @@ async def rename_and_upload_file(client: Client, message: Message):
         os.remove(new_file_path)
         
     await status_msg.delete()
+    from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+@Client.on_message(filters.document | filters.video)
+async def incoming_file_handler(client: Client, message: Message):
+    user_id = message.from_user.id
+    user_data = await get_user_data(user_id)
+    
+    saved_title = user_data.get("title", "AnimeYaro")
+    
+    # Send an interactive prompt with buttons just like a professional renamer bot
+    await message.reply_text(
+        f"**File Received Successfully!** 📁\n\n"
+        f"• **Saved Title in DB:** `{saved_title}`\n\n"
+        f"Choose an option below to rename your file:",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("✨ Rename with Saved Title", callback_data="rename_saved")],
+            [InlineKeyboardButton("✏️ Send Custom Name", callback_data="rename_custom")],
+            [InlineKeyboardButton("❌ Cancel", callback_data="cancel")]
+        ])
+    )
+
+# Callback handler for the buttons
+@Client.on_callback_query(filters.regex("rename_saved"))
+async def rename_with_saved(client: Client, callback_query):
+    await callback_query.message.edit_text("⚡ Processing file with your saved title...")
+    # Add your file download, rename, and upload logic here using the saved title
+    await callback_query.answer("Renaming started!")
+
+@Client.on_callback_query(filters.regex("cancel"))
+async def cancel_process(client: Client, callback_query):
+    await callback_query.message.delete()
+    await callback_query.answer("Cancelled.")
