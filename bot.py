@@ -19,7 +19,7 @@ app = Client("telegram_rename_bot", api_id=API_ID, api_hash=API_HASH, bot_token=
 @app.on_message(filters.command(["start", "help"]))
 async def help_menu(client, message):
     menu_text = (
-        "🤖 **AIOM Telegram Rename & Metadata Bot**\n\n"
+        "🤖 **AnimeYaro Rename Bot**\n\n"
         "**Features & How to Use:**\n"
         "• **Permanent Thumbnail**: Send any photo with `/set_thumb` in the caption to save it to MongoDB.\n"
         "• **Custom Metadata**: Send a video with custom tags in the caption using this format:\n\n"
