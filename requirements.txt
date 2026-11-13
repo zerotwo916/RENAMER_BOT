@@ -1,4 +1,4 @@
-pyrogram
-tgcrypto
-motor
-pymongo
+title: My Favorite Episode 01
+artist: My Anime Channel
+audio: Japanese (AAC)
+subtitle: English (ASS)
