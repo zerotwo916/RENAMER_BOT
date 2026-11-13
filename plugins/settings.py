@@ -1,3 +1,4 @@
+import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -20,11 +21,21 @@ async def update_user_data(user_id: int, key: str, value):
 
 @Client.on_message(filters.command("start"))
 async def start_command(client: Client, message: Message):
-    await message.reply_text("Welcome to your Renamer Bot! Use the menu buttons or commands to configure your metadata and settings.")
+    await message.reply_text("Welcome to your Renamer Bot! Send any video or document file to rename it using your saved metadata and settings.")
 
 @Client.on_message(filters.command("help"))
 async def help_command(client: Client, message: Message):
-    await message.reply_text("Available commands:\n/set_thumb, /viewthumb, /settitle, /setaudio, /setsubtitle, /setvideo, /setartist, /setauthor")
+    await message.reply_text(
+        "**Available Commands:**\n"
+        "/set_thumb - Save custom thumbnail image\n"
+        "/viewthumb - View currently saved thumbnail\n"
+        "/settitle - Set custom title metadata\n"
+        "/setaudio - Set custom audio track handling\n"
+        "/setsubtitle - Set custom subtitle track handling\n"
+        "/setvideo - Set custom video track handling\n"
+        "/setartist - Set custom artist metadata\n"
+        "/setauthor - Set custom author metadata"
+    )
 
 @Client.on_message(filters.command("set_thumb"))
 async def set_thumb(client: Client, message: Message):
@@ -107,3 +118,43 @@ async def set_author(client: Client, message: Message):
     author = " ".join(message.command[1:])
     await update_user_data(message.from_user.id, "author", author)
     await message.reply_text(f"Author successfully set to: {author}")
+
+@Client.on_message(filters.document | filters.video)
+async def rename_and_upload_file(client: Client, message: Message):
+    user_id = message.from_user.id
+    user_data = await get_user_data(user_id)
+    
+    custom_title = user_data.get("title", "AnimeYaro")
+    thumb = user_data.get("thumbnail")
+
+    status_msg = await message.reply_text("📥 Downloading your file...")
+
+    # Download file locally
+    file_path = await message.download()
+    
+    file_ext = os.path.splitext(file_path)[1]
+    new_filename = f"{custom_title}{file_ext}"
+    new_file_path = os.path.join("downloads", new_filename)
+    os.makedirs("downloads", exist_ok=True)
+    os.rename(file_path, new_file_path)
+
+    await status_msg.edit_text("📤 Uploading renamed file...")
+    
+    if thumb:
+        await client.send_document(
+            chat_id=message.chat.id,
+            document=new_file_path,
+            thumb=thumb,
+            caption=f"@{custom_title}"
+        )
+    else:
+        await client.send_document(
+            chat_id=message.chat.id,
+            document=new_file_path,
+            caption=f"@{custom_title}"
+        )
+
+    if os.path.exists(new_file_path):
+        os.remove(new_file_path)
+        
+    await status_msg.delete()
